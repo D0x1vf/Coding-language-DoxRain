@@ -393,12 +393,3 @@ When reporting issues, please include:
 
 ---
 
-**Start your DoxRain journey today!** 
-
-```bash
-git clone https://github.com/yourusername/doxrain.git
-cd doxrain && make
-./doxrain complete_doxrain_tutorial.dox
-```
-
-*DoxRain - Programming Made Simple* 🚀
