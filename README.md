@@ -24,4 +24,4 @@ Language usage, syntax, and examples are provided in a separate file inside the 
 
 License -
 
-See the [view LICENSE](license) file for full details.
+See the [LICENSE](license) file for full details.
