@@ -22,6 +22,4 @@ Features -
 
 Language usage, syntax, and examples are provided in a separate file inside the repository.
 
-License -
 
-See the [LICENSE](license) file for full details.
