@@ -1,0 +1,14 @@
+name = "cherokee"
+display_name = "Cherokee Framework"
+release_name = "DoxRain Cherokee"
+framework_api = "0.1"
+engine_api = "0.1"
+host = "windows"
+minimum_windows = "Windows 7"
+architectures = ["x86", "x86_64"]
+
+[paths]
+# These are logical locations. The Windows host resolves them at runtime.
+user_packages = "%APPDATA%\\DoxRain\\Cherokee\\packages"
+user_config = "%APPDATA%\\DoxRain\\Cherokee\\config"
+cache = "%LOCALAPPDATA%\\DoxRain\\Cherokee\\cache"
