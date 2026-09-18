@@ -1,0 +1,7 @@
+# Example Cherokee program
+
+# Comments begin with # or //
+let platform = "Windows"
+let result = 40 + 2
+show "Hello from {platform}!"
+show "The answer is {result}."

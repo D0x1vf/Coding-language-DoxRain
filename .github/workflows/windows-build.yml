@@ -1,0 +1,36 @@
+name: Windows builds
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [windows-first-cherokee]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - x86_64-pc-windows-msvc
+          - i686-pc-windows-msvc
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: 1.77.2
+          targets: ${{ matrix.target }}
+      - name: Build
+        run: cargo build --release --target ${{ matrix.target }}
+      - name: Test CLI
+        shell: pwsh
+        run: |
+          & "target/${{ matrix.target }}/release/doxrain.exe" --version
+          & "target/${{ matrix.target }}/release/doxrain.exe" --check examples/hello.dox
+      - name: Upload executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: doxrain-${{ matrix.target }}
+          path: target/${{ matrix.target }}/release/doxrain.exe
