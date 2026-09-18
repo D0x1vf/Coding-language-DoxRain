@@ -1,0 +1,17 @@
+# Framework registry
+
+This registry is a development placeholder. It is not yet a production update channel.
+
+Each non-comment line has this format:
+
+```text
+framework|technical_version|host|architecture|archive_url|sha256
+```
+
+Example:
+
+```text
+# cherokee|0.1.0|windows|x86_64|https://downloads.example.invalid/cherokee-0.1.0.zip|CHECKSUM
+```
+
+Before production use, registry metadata must be signed and verified with a public key bundled into DoxRain.
