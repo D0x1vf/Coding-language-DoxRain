@@ -1,0 +1,56 @@
+name: Build Cherokee Windows x86
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: 1.77.2
+          targets: i686-pc-windows-msvc
+
+      - name: Build x86 binary
+        run: cargo build --release --target i686-pc-windows-msvc
+
+      - name: Validate example file
+        shell: pwsh
+        run: |
+          $binary = "target/i686-pc-windows-msvc/release/doxrain.exe"
+          if (!(Test-Path $binary)) {
+            throw "Binary not found: $binary"
+          }
+          & $binary --check examples/hello.dox
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Package release zip
+        shell: pwsh
+        run: |
+          $root = "package"
+          New-Item -ItemType Directory -Force -Path "$root/examples" | Out-Null
+
+          Copy-Item "target/i686-pc-windows-msvc/release/doxrain.exe" "$root/doxrain.exe"
+          Copy-Item "examples/hello.dox" "$root/examples/hello.dox"
+
+          if (Test-Path "README.md") {
+            Copy-Item "README.md" "$root/README.md"
+          }
+          if (Test-Path "LICENSE") {
+            Copy-Item "LICENSE" "$root/LICENSE"
+          }
+
+          Compress-Archive -Path "$root/*" -DestinationPath "DoxRain-Cherokee-Windows-x86.zip" -Force
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: DoxRain-Cherokee-Windows-x86
+          path: DoxRain-Cherokee-Windows-x86.zip
+          if-no-files-found: error
