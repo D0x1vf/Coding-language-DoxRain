@@ -1,34 +1,11 @@
-name: Build and publish Cherokee Windows assets
+name: Build Cherokee Windows x64
 
 on:
   workflow_dispatch:
-    inputs:
-      release_tag:
-        description: Release tag to update
-        required: true
-        default: Cherokee-Doxrain-1.0.0
-  push:
-    tags:
-      - 'Cherokee-Doxrain-*'
-
-permissions:
-  contents: write
-
-env:
-  RUST_TOOLCHAIN: 1.77.2
 
 jobs:
   build:
-    name: Build ${{ matrix.name }}
-    runs-on: windows-2019
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - name: x64
-            target: x86_64-pc-windows-msvc
-          - name: x86
-            target: i686-pc-windows-msvc
+    runs-on: windows-latest
 
     steps:
       - name: Check out source
@@ -37,85 +14,42 @@ jobs:
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: ${{ env.RUST_TOOLCHAIN }}
-          targets: ${{ matrix.target }}
+          toolchain: 1.77.2
 
-      - name: Build Cherokee
-        run: cargo build --release --target ${{ matrix.target }}
+      - name: Build x64 binary
+        run: cargo build --release --target x86_64-pc-windows-msvc
 
-      - name: Check example program
+      - name: Validate example file
         shell: pwsh
         run: |
-          $binary = "target/${{ matrix.target }}/release/doxrain.exe"
+          $binary = "target/x86_64-pc-windows-msvc/release/doxrain.exe"
+          if (!(Test-Path $binary)) {
+            throw "Binary not found: $binary"
+          }
           & $binary --check examples/hello.dox
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-      - name: Package asset
+      - name: Package release zip
         shell: pwsh
         run: |
-          $name = "DoxRain-Cherokee-Windows-${{ matrix.name }}"
-          $root = "package/$name"
+          $root = "package"
           New-Item -ItemType Directory -Force -Path "$root/examples" | Out-Null
-          Copy-Item "target/${{ matrix.target }}/release/doxrain.exe" "$root/doxrain.exe"
-          Copy-Item "examples/hello.dox" "$root/examples/hello.dox"
-          Copy-Item "README.md" "$root/README.md"
-          Copy-Item "LICENSE" "$root/LICENSE"
-          Compress-Archive -Path "$root/*" -DestinationPath "$name.zip" -Force
-          Get-FileHash "$name.zip" -Algorithm SHA256 | Format-List
 
-      - name: Upload build artifact
+          Copy-Item "target/x86_64-pc-windows-msvc/release/doxrain.exe" "$root/doxrain.exe"
+          Copy-Item "examples/hello.dox" "$root/examples/hello.dox"
+
+          if (Test-Path "README.md") {
+            Copy-Item "README.md" "$root/README.md"
+          }
+          if (Test-Path "LICENSE") {
+            Copy-Item "LICENSE" "$root/LICENSE"
+          }
+
+          Compress-Archive -Path "$root/*" -DestinationPath "DoxRain-Cherokee-Windows-x64.zip" -Force
+
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: DoxRain-Cherokee-Windows-${{ matrix.name }}
-          path: DoxRain-Cherokee-Windows-${{ matrix.name }}.zip
-          if-no-files-found: error
-
-  publish:
-    name: Publish release assets
-    needs: build
-    runs-on: windows-2019
-    steps:
-      - name: Check out source
-        uses: actions/checkout@v4
-
-      - name: Download x64 asset
-        uses: actions/download-artifact@v4
-        with:
           name: DoxRain-Cherokee-Windows-x64
-          path: dist
-
-      - name: Download x86 asset
-        uses: actions/download-artifact@v4
-        with:
-          name: DoxRain-Cherokee-Windows-x86
-          path: dist
-
-      - name: Create SHA256SUMS.txt
-        shell: pwsh
-        run: |
-          $files = Get-ChildItem dist/*.zip | Sort-Object Name
-          $lines = foreach ($file in $files) {
-            $hash = (Get-FileHash $file.FullName -Algorithm SHA256).Hash.ToLower()
-            "$hash  $($file.Name)"
-          }
-          $lines | Set-Content -Encoding ascii dist/SHA256SUMS.txt
-          Get-Content dist/SHA256SUMS.txt
-
-      - name: Select release tag
-        id: release
-        shell: pwsh
-        run: |
-          if ("${{ github.event_name }}" -eq "workflow_dispatch") {
-            "tag=${{ inputs.release_tag }}" >> $env:GITHUB_OUTPUT
-          } else {
-            "tag=${{ github.ref_name }}" >> $env:GITHUB_OUTPUT
-          }
-
-      - name: Upload assets to Cherokee release
-        shell: pwsh
-        env:
-          GH_TOKEN: ${{ github.token }}
-          RELEASE_TAG: ${{ steps.release.outputs.tag }}
-        run: |
-          gh release view $env:RELEASE_TAG --repo $env:GITHUB_REPOSITORY
-          gh release upload $env:RELEASE_TAG dist/*.zip dist/SHA256SUMS.txt --repo $env:GITHUB_REPOSITORY --clobber
+          path: DoxRain-Cherokee-Windows-x64.zip
+          if-no-files-found: error
