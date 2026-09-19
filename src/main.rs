@@ -98,7 +98,8 @@ fn split_operation(text: &str) -> Option<(&str, char, &str)> {
 fn main() {
     let arguments: Vec<String> = env::args().skip(1).collect();
     match arguments.as_slice() {
-        [] | [flag] if flag == "--help" || flag == "-h" => print_help(),
+        [] => print_help(),
+        [flag] if flag == "--help" || flag == "-h" => print_help(),
         [flag] if flag == "--version" || flag == "-V" => println!("{RELEASE_NAME} (engine {ENGINE_VERSION})"),
         [file] => execute_file(file, false),
         [flag, file] if flag == "--check" => execute_file(file, true),
