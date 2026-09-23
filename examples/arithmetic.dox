@@ -1,0 +1,5 @@
+# Arithmetic accepted by the Cherokee 0.5.0 C engine
+let width = 8
+let height = 5
+let area = width * height
+show "Area = {area}"

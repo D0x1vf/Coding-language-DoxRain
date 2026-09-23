@@ -1,0 +1,2 @@
+# This example intentionally produces E103.
+show "Unknown: {missing}"

@@ -1,13 +1,16 @@
 [package]
 name = "doxrain"
-version = "0.1.0"
+version = "0.5.0"
 edition = "2021"
-description = "DoxRain Cherokee - Windows-first scripting language"
+description = "DoxRain Cherokee experimental C-backed compiler-interpreter"
 license = "AGPL-3.0"
 
 [[bin]]
 name = "doxrain"
 path = "src/main.rs"
+
+[build-dependencies]
+cc = "1.0"
 
 [profile.release]
 opt-level = 3
