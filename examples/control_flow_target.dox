@@ -1,0 +1,14 @@
+fn add(a, b) {
+    return a + b
+}
+
+let result = add(20, 22)
+if result == 42 {
+    show "answer = {result}"
+} else {
+    show "unexpected result"
+}
+
+for i in 0..3 {
+    show "item {i}"
+}

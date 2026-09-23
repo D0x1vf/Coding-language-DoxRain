@@ -1,3 +1,2 @@
-# This example intentionally produces E105.
-let zero = 0
-show 10 / zero
+# Cherokee 0.5.0 diagnostic fixture
+show 10 / 0
