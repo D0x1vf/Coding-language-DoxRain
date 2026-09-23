@@ -1,41 +1,55 @@
-# DoxRain Cherokee 0.5.0
+# DoxRain
 
-Cherokee 0.5.0 is an experimental DoxRain language milestone. It tests a fuller language engine built around a C compiler/interpreter backend connected to the Rust Cargo/MSVC entrypoint.
+DoxRain is an experimental programming language designed to make programming readable without giving up useful low-level control. Its syntax is intended to be approachable for beginners while remaining suitable for serious software projects.
 
-DoxRain is intended to pursue Rust-like safety goals with simpler, more approachable syntax. Its long-term targets include 2D development, future 3D and AAA-oriented development, defensive cybersecurity tooling, external applications, and embedded programming.
+The language is being developed with these goals:
 
-## What this release is
+- clear, human-readable source code
+- predictable behavior and useful diagnostics
+- simple syntax for learning and rapid development
+- strong safety goals inspired by modern systems languages
+- a path from scripting and applications to games, tools, and embedded software
 
-Cherokee 0.5.0 is a testing version, not a finished compiler or stable language specification. The Rust prototype remains the reference for language ideas while the C engine is expanded toward a substantially fuller implementation.
+DoxRain is still under active development. The language rules are being tested and may change.
 
-The release direction is:
+## Language style
 
-```text
-.dox source → C lexer/parser → C compiler/interpreter → runtime
-                         ↘ Rust CLI/build integration
+A small DoxRain program looks like this:
+
+```dox
+let name = "DoxRain"
+let answer = 40 + 2
+
+show "Hello from {name}"
+show "The answer is {answer}"
 ```
 
-Cargo and the MSVC toolchain remain the Windows build system. That does not make Rust the main language engine: the C backend is the experimental execution engine.
+DoxRain uses readable statements and familiar expressions. Comments can begin with `#` or `//`.
 
-## Current syntax target
+```dox
+# A variable can be changed during a program.
+let score = 10
+score = score + 5
+show score
+```
 
-The 0.5.0 engine is being expanded toward these core features:
+## Core syntax direction
 
-- `let` variables and reassignment
-- integers, floating-point values, booleans, and strings
-- arithmetic and comparison expressions
-- string interpolation
+The current language design is being expanded around:
+
+- variables and assignment
+- integers and floating-point numbers
+- booleans and strings
+- arithmetic expressions
+- comparisons such as `==`, `!=`, `<`, `>`, `<=`, and `>=`
+- string interpolation with `{name}`
 - `show` output
-- `if` / `else` blocks
-- `for` range loops
-- user functions and return values
-- comments beginning with `#` or `//`
-- `--check`, `--version`, and `--help`
-- source-aware diagnostics with error code, file, line, column, and source text
+- `if` and `else` blocks
+- range-based `for` loops
+- functions with parameters and return values
+- comments
 
-Only features confirmed by the executable should be treated as available. Arrays, imports, packages, a type checker, bytecode generation, and native compilation remain later work unless explicitly marked otherwise in the examples.
-
-Example target syntax:
+Example:
 
 ```dox
 fn add(a, b) {
@@ -43,10 +57,11 @@ fn add(a, b) {
 }
 
 let result = add(20, 22)
+
 if result == 42 {
-    show "answer = {result}"
+    show "The answer is {result}"
 } else {
-    show "unexpected result"
+    show "The result was {result}"
 }
 
 for i in 0..3 {
@@ -54,17 +69,11 @@ for i in 0..3 {
 }
 ```
 
-## Run
+This example describes the current syntax target. Check the examples and implementation before relying on a feature in a project.
 
-```bat
-doxrain.exe --version
-doxrain.exe --check examples\hello.dox
-doxrain.exe examples\hello.dox
-```
+## Errors that explain the problem
 
-## Diagnostics
-
-The new engine is intended to report errors in a form that is useful to people, not only to the build system:
+DoxRain is intended to show errors in a way that helps a person fix the source code. Diagnostics should identify the error, file, line, column, and the relevant source text.
 
 ```text
 error[E105]: division by zero
@@ -74,29 +83,59 @@ error[E105]: division by zero
   |          ^
 ```
 
-Diagnostics are part of the Cherokee 0.5.0 experiment and will continue to improve as the parser and runtime grow.
+The diagnostic system is part of the language design, not only a compiler detail. Clear errors are especially important as the syntax grows.
 
-## Build
+## Current implementation
 
-Windows builds use Rust 1.77.2, Cargo, and the MSVC targets. Cargo invokes the C build through `build.rs`:
+The project is testing a compiler/interpreter hybrid:
+
+```text
+.dox source
+    ↓
+lexer and parser
+    ↓
+compiler/interpreter runtime
+    ↓
+program output
+```
+
+The current test engine is written in C and integrated with a Rust command-line and build boundary. The Rust full prototype is kept as a reference implementation for language ideas and behavior while the C engine is expanded.
+
+Cherokee is the name used for the current Windows-first test-release line. Cherokee 0.5.0 is an experimental milestone for the newer engine; it is not a final DoxRain specification.
+
+## Try DoxRain
+
+From a built executable:
+
+```bat
+doxrain.exe examples\hello.dox
+doxrain.exe --check examples\hello.dox
+doxrain.exe --version
+doxrain.exe --help
+```
+
+The `examples/` directory contains small programs and diagnostic fixtures. Examples that describe planned syntax are marked accordingly.
+
+## Build on Windows
+
+The Windows build uses Cargo and the MSVC targets. Cargo compiles the C engine through `build.rs`:
 
 ```bat
 cargo build --release --target x86_64-pc-windows-msvc
 cargo build --release --target i686-pc-windows-msvc
 ```
 
-The dedicated workflow packages the executable, this README, the license, and the `.dox` examples for testing.
+Rust 1.77.2 is currently pinned for the Windows-first test configuration. Visual Studio C++ Build Tools are required for the MSVC targets.
 
-## Release history
+## Project status
 
-- **Cherokee 0.1.0** — historical Windows test release using the original small Rust engine.
-- **Cherokee 0.5.0** — experimental C compiler/interpreter engine and fuller syntax development.
-- **Leonardo** — planned later generation after the experimental semantics and runtime are proven.
+DoxRain is a language experiment, not a stable production compiler. The following work is still evolving:
 
-## Repository
+- fuller parsing and evaluation
+- complete control flow and function behavior
+- structured type and runtime rules
+- arrays, modules, and libraries
+- bytecode and native compilation options
+- cross-platform hosts
 
-- `src/main.rs` — Rust CLI and C-engine integration boundary
-- `runtime_c/` — experimental C compiler/interpreter runtime
-- `doxrain_fullcode_Prototype.rs` — Rust reference prototype
-- `examples/` — executable language examples
-- `.github/workflows/` — build and packaging automation
+The immediate goal is a coherent, readable language core that can be tested through both the Rust reference prototype and the C-backed experimental engine.
