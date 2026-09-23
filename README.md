@@ -1,78 +1,60 @@
-# DoxRain Cherokee
+# DoxRain Cherokee 0.5.0
 
-DoxRain Cherokee is the Windows-first foundation for the DoxRain programming language and its early host/runtime direction.
+Cherokee 0.5.0 is an experimental DoxRain language milestone. It tests a fuller language engine built around a C compiler/interpreter backend connected to the Rust Cargo/MSVC entrypoint.
 
-This repository is currently an early interpreter-based milestone. It is intended for experimentation, feedback, and foundation work rather than a final language runtime.
+DoxRain is intended to pursue Rust-like safety goals with simpler, more approachable syntax. Its long-term targets include 2D development, future 3D and AAA-oriented development, defensive cybersecurity tooling, external applications, and embedded programming.
 
-## Repository layout
+## What this release is
 
-- `src/` — Rust source for the interpreter and CLI
-- `host/windows/` — Windows host layer and platform-specific behavior
-- `examples/` — example `.dox` programs
-- `docs/` — architecture, updater, and tutorial documentation
-- `docs/tutorials/` — multilingual tutorial set (main tutorial entry point)
-- `frameworks/` — framework manifests and framework design docs
-- `.github/workflows/` — GitHub Actions workflows for build automation
-- `Cargo.toml` — Rust project configuration
-- `WINDOWS.md` — Windows build and target notes
+Cherokee 0.5.0 is a testing version, not a finished compiler or stable language specification. The Rust prototype remains the reference for language ideas while the C engine is expanded toward a substantially fuller implementation.
 
-## Current status
+The release direction is:
 
-The project is currently a Windows-first foundation release.
-
-Supported target states in this repo:
-
-- Windows x64: `x86_64-pc-windows-msvc`
-- Windows x86: `i686-pc-windows-msvc`
-
-The current interpreter supports a small early language surface: variables, strings, arithmetic, `show`, `--check`, and basic CLI behavior. Larger features described elsewhere in the project are still planned or under active development.
-
-## Releases
-
-The current public release is a Windows test-platform build:
-
-- `DoxRain-Cherokee-Windows-x64.zip`
-- `DoxRain-Cherokee-Windows-x86.zip`
-
-These are attached to the GitHub release and are intended for early evaluation.
-
-## Main tutorials
-
-The active tutorial set is in the multilingual docs folder:
-
-- `docs/tutorials/DoxRain_Tutorial_EN-GB.md`
-- `docs/tutorials/DoxRain_Tutorial_ES.md`
-- `docs/tutorials/DoxRain_Tutorial_FR.md`
-- `docs/tutorials/DoxRain_Tutorial_AR.md`
-- `docs/tutorials/DoxRain_Tutorial_RU.md`
-- `docs/tutorials/DoxRain_Tutorial_UK.md`
-- `docs/tutorials/DoxRain_Tutorial_ZH.md`
-
-These are the main tutorial sources for the project.
-
-## Core docs
-
-- `docs/ARCHITECTURE.md` — project architecture
-- `docs/UNIFIED_ARCHITECTURE.md` — unified design model
-- `docs/CHEROKEE_FRAMEWORK.md` — Cherokee framework concepts
-- `docs/FRAMEWORK_VERSIONS.md` — framework versioning notes
-- `docs/HYBRID_EXECUTION.md` — hybrid execution model
-- `docs/UPDATER.md` — updater design and responsibilities
-- `WINDOWS.md` — Windows build notes and validation matrix
-- `frameworks/cherokee/README.md` — Cherokee framework overview
-
-## Build
-
-Windows builds are produced with Rust and MSVC targets:
-
-```bat
-cargo build --release --target x86_64-pc-windows-msvc
-cargo build --release --target i686-pc-windows-msvc
+```text
+.dox source → C lexer/parser → C compiler/interpreter → runtime
+                         ↘ Rust CLI/build integration
 ```
 
-## Quick run
+Cargo and the MSVC toolchain remain the Windows build system. That does not make Rust the main language engine: the C backend is the experimental execution engine.
 
-From the extracted Windows build folder:
+## Current syntax target
+
+The 0.5.0 engine is being expanded toward these core features:
+
+- `let` variables and reassignment
+- integers, floating-point values, booleans, and strings
+- arithmetic and comparison expressions
+- string interpolation
+- `show` output
+- `if` / `else` blocks
+- `for` range loops
+- user functions and return values
+- comments beginning with `#` or `//`
+- `--check`, `--version`, and `--help`
+- source-aware diagnostics with error code, file, line, column, and source text
+
+Only features confirmed by the executable should be treated as available. Arrays, imports, packages, a type checker, bytecode generation, and native compilation remain later work unless explicitly marked otherwise in the examples.
+
+Example target syntax:
+
+```dox
+fn add(a, b) {
+    return a + b
+}
+
+let result = add(20, 22)
+if result == 42 {
+    show "answer = {result}"
+} else {
+    show "unexpected result"
+}
+
+for i in 0..3 {
+    show "item {i}"
+}
+```
+
+## Run
 
 ```bat
 doxrain.exe --version
@@ -80,16 +62,41 @@ doxrain.exe --check examples\hello.dox
 doxrain.exe examples\hello.dox
 ```
 
-## Example
+## Diagnostics
 
-```dox
-let platform = "Windows"
-show "Hello from {platform}"
+The new engine is intended to report errors in a form that is useful to people, not only to the build system:
+
+```text
+error[E105]: division by zero
+ --> examples/errors/division_by_zero.dox:3:10
+  |
+3 | show 10 / zero
+  |          ^
 ```
 
-## Notes
+Diagnostics are part of the Cherokee 0.5.0 experiment and will continue to improve as the parser and runtime grow.
 
-- This is a foundation-level project and a test platform release.
-- The repo is intentionally organized around a Windows-first host model.
-- The multilingual tutorial set is the canonical documentation for learning the language.
-- The root-level tutorial file is kept only as a compatibility stub and redirects users to the real tutorial directory.
+## Build
+
+Windows builds use Rust 1.77.2, Cargo, and the MSVC targets. Cargo invokes the C build through `build.rs`:
+
+```bat
+cargo build --release --target x86_64-pc-windows-msvc
+cargo build --release --target i686-pc-windows-msvc
+```
+
+The dedicated workflow packages the executable, this README, the license, and the `.dox` examples for testing.
+
+## Release history
+
+- **Cherokee 0.1.0** — historical Windows test release using the original small Rust engine.
+- **Cherokee 0.5.0** — experimental C compiler/interpreter engine and fuller syntax development.
+- **Leonardo** — planned later generation after the experimental semantics and runtime are proven.
+
+## Repository
+
+- `src/main.rs` — Rust CLI and C-engine integration boundary
+- `runtime_c/` — experimental C compiler/interpreter runtime
+- `doxrain_fullcode_Prototype.rs` — Rust reference prototype
+- `examples/` — executable language examples
+- `.github/workflows/` — build and packaging automation

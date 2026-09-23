@@ -1,7 +1,5 @@
-# Example Cherokee program
-
-# Comments begin with # or //
+# Basic values and interpolation
 let platform = "Windows"
-let result = 40 + 2
+let answer = 40 + 2
 show "Hello from {platform}!"
-show "The answer is {result}."
+show "The answer is {answer}."

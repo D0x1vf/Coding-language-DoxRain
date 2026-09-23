@@ -1,0 +1,4 @@
+# Comments and variables
+// Cherokee 0.5.0 test example
+let name = "DoxRain"
+show "Project: {name}"
