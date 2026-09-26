@@ -1,55 +1,40 @@
-name: Cherokee 0.5 C hybrid
+use std::env;
+use std::ffi::CString;
+use std::process;
 
-on:
-  workflow_dispatch:
-  push:
-    branches: [windows-first-cherokee]
+#[link(name = "doxrain_engine", kind = "static")]
+extern "C" {
+    fn doxrain_run_file(path: *const std::os::raw::c_char, check_only: i32) -> i32;
+}
 
-jobs:
-  build:
-    runs-on: windows-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        target: [x86_64-pc-windows-msvc, i686-pc-windows-msvc]
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Install Rust and MSVC targets
-        uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: 1.77.2
-          targets: ${{ matrix.target }}
-      - name: Build C-backed Cargo binary
-        run: cargo build --release --target ${{ matrix.target }}
-      - name: Test CLI and supported examples
-        shell: pwsh
-        run: |
-          $binary = "target/${{ matrix.target }}/release/doxrain.exe"
-          & $binary --version
-          & $binary --check examples/hello.dox
-          & $binary examples/hello.dox
-          & $binary --check examples/arithmetic.dox
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-      - name: Verify readable diagnostics
-        shell: pwsh
-        run: |
-          $binary = "target/${{ matrix.target }}/release/doxrain.exe"
-          & $binary --check examples/errors/division_by_zero.dox
-          if ($LASTEXITCODE -eq 0) { throw "Expected an error for the diagnostic fixture" }
-      - name: Package Cherokee 0.5.0
-        shell: pwsh
-        run: |
-          $root = "package"
-          New-Item -ItemType Directory -Force -Path "$root/examples/errors" | Out-Null
-          Copy-Item "target/${{ matrix.target }}/release/doxrain.exe" "$root/doxrain.exe"
-          Copy-Item "README.md" "$root/README.md"
-          Copy-Item "LICENSE" "$root/LICENSE"
-          Copy-Item "examples/*.dox" "$root/examples/"
-          Copy-Item "examples/errors/*.dox" "$root/examples/errors/"
-          Compress-Archive -Path "$root/*" -DestinationPath "DoxRain-Cherokee-0.5.0-${{ matrix.target }}.zip" -Force
-      - name: Upload test artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: DoxRain-Cherokee-0.5.0-${{ matrix.target }}
-          path: DoxRain-Cherokee-0.5.0-${{ matrix.target }}.zip
+fn help() {
+    println!("DoxRain 0.5.0 (experimental)");
+    println!("C-backed compiler-interpreter test engine");
+    println!();
+    println!("Usage:");
+    println!("  doxrain <file.dox>       Compile and run a DoxRain program");
+    println!("  doxrain --check <file>   Compile without running");
+    println!("  doxrain --version        Show the DoxRain test version");
+    println!("  doxrain --help           Show this help");
+}
+
+fn main() {
+    let args: Vec<String> = env::args().skip(1).collect();
+    match args.as_slice() {
+        [] => help(),
+        [flag] if flag == "--help" || flag == "-h" => help(),
+        [flag] if flag == "--version" || flag == "-V" => println!("DoxRain 0.5.0 (C hybrid experimental)"),
+        [file] => run(file, 0),
+        [flag, file] if flag == "--check" => run(file, 1),
+        _ => { eprintln!("error[E000]: invalid arguments; use `doxrain --help`"); process::exit(2); }
+    }
+}
+
+fn run(path: &str, check_only: i32) {
+    let path = CString::new(path).unwrap_or_else(|_| {
+        eprintln!("error[E001]: file path contains an invalid NUL character");
+        process::exit(2);
+    });
+    let status = unsafe { doxrain_run_file(path.as_ptr(), check_only) };
+    if status != 0 { process::exit(status); }
+}

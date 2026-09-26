@@ -1,9 +1,55 @@
-fn main() {
-    cc::Build::new()
-        .file("runtime_c/doxrain_engine.c")
-        .include("runtime_c/include")
-        .warnings(true)
-        .compile("doxrain_engine");
-    println!("cargo:rerun-if-changed=runtime_c/doxrain_engine.c");
-    println!("cargo:rerun-if-changed=runtime_c/include/doxrain_engine.h");
-}
+name: DoxRain C hybrid
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [DoxRain]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [x86_64-pc-windows-msvc, i686-pc-windows-msvc]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install Rust and MSVC targets
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: 1.77.2
+          targets: ${{ matrix.target }}
+      - name: Build C-backed Cargo binary
+        run: cargo build --release --target ${{ matrix.target }}
+      - name: Test CLI and supported examples
+        shell: pwsh
+        run: |
+          $binary = "target/${{ matrix.target }}/release/doxrain.exe"
+          & $binary --version
+          & $binary --check examples/hello.dox
+          & $binary examples/hello.dox
+          & $binary --check examples/arithmetic.dox
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Verify readable diagnostics
+        shell: pwsh
+        run: |
+          $binary = "target/${{ matrix.target }}/release/doxrain.exe"
+          & $binary --check examples/errors/division_by_zero.dox
+          if ($LASTEXITCODE -eq 0) { throw "Expected an error for the diagnostic fixture" }
+      - name: Package DoxRain 0.5.0
+        shell: pwsh
+        run: |
+          $root = "package"
+          New-Item -ItemType Directory -Force -Path "$root/examples/errors" | Out-Null
+          Copy-Item "target/${{ matrix.target }}/release/doxrain.exe" "$root/doxrain.exe"
+          Copy-Item "README.md" "$root/README.md"
+          Copy-Item "LICENSE" "$root/LICENSE"
+          Copy-Item "examples/*.dox" "$root/examples/"
+          Copy-Item "examples/errors/*.dox" "$root/examples/errors/"
+          Compress-Archive -Path "$root/*" -DestinationPath "DoxRain-0.5.0-${{ matrix.target }}.zip" -Force
+      - name: Upload test artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: DoxRain-0.5.0-${{ matrix.target }}
+          path: DoxRain-0.5.0-${{ matrix.target }}.zip
